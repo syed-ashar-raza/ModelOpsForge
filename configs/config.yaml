@@ -1,0 +1,17 @@
+project:
+  name: ModelOpsForge
+
+data:
+  random_state: 42
+  samples: 5000
+
+training:
+  test_size: 0.2
+  random_state: 42
+  n_estimators: 250
+  max_depth: 8
+  min_samples_leaf: 3
+
+evaluation:
+  min_roc_auc: 0.80
+  min_f1: 0.65
