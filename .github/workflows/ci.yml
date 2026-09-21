@@ -33,3 +33,55 @@ jobs:
 
       - name: Verify Docker image
         run: docker image inspect modelopsforge:ci
+
+      - name: Start Docker container
+        run: docker run -d --name modelopsforge-ci -p 8000:8000 modelopsforge:ci
+
+      - name: Wait for API
+        run: |
+          for i in {1..30}; do
+            if curl --fail --silent http://localhost:8000/health > /tmp/health.json; then
+              cat /tmp/health.json
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs modelopsforge-ci
+          exit 1
+
+      - name: Verify readiness
+        run: |
+          curl --fail --silent http://localhost:8000/ready
+          echo
+
+      - name: Verify real inference
+        run: |
+          response=$(curl --fail --silent \
+            -X POST http://localhost:8000/predict \
+            -H "Content-Type: application/json" \
+            -d '{
+              "age": 35,
+              "tenure_months": 24,
+              "monthly_spend": 120,
+              "support_tickets": 2,
+              "satisfaction": 8,
+              "contract_months": 24,
+              "payment_failures": 0,
+              "usage_hours": 80
+            }')
+          echo "$response"
+          echo "$response" | grep -q '"prediction"'
+          echo "$response" | grep -q '"probability"'
+          echo "$response" | grep -q '"model"'
+          echo "$response" | grep -q '"alias"'
+
+      - name: Verify monitoring metrics
+        run: |
+          metrics=$(curl --fail --silent http://localhost:8000/metrics)
+          echo "$metrics" | grep -q 'modelopsforge_requests'
+          echo "$metrics" | grep -q 'modelopsforge_request_latency_seconds'
+          echo "$metrics" | grep -q 'modelopsforge_predictions'
+
+      - name: Cleanup Docker container
+        if: always()
+        run: docker rm -f modelopsforge-ci
