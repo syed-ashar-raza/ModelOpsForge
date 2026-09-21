@@ -1,4 +1,5 @@
-from modelopsforge.data import make_dataset, validate_dataset, FEATURES
+from modelopsforge.data import FEATURES, make_dataset, validate_dataset
+
 
 def test_dataset_is_valid():
     dataset = make_dataset(samples=200)

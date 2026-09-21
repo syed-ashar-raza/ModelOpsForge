@@ -1,4 +1,6 @@
+﻿import shutil
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import mlflow
 import mlflow.sklearn
@@ -6,7 +8,7 @@ from sklearn.model_selection import train_test_split
 
 from .config import settings
 from .data import make_dataset, validate_dataset
-from .evaluation import evaluate, accepted
+from .evaluation import accepted, evaluate
 from .model import build_model
 
 SKOPS_TRUSTED_TYPES = ["sklearn.tree._tree.Tree"]
@@ -63,21 +65,30 @@ def train_and_register() -> dict:
         )
         latest = max(versions, key=lambda v: int(v.version))
 
+        artifact_path = Path(settings.model_artifact_path)
+        artifact_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with TemporaryDirectory(
+            prefix="modelopsforge_",
+            dir=artifact_path.parent,
+        ) as temp_dir:
+            temp_path = Path(temp_dir) / artifact_path.name
+
+            mlflow.sklearn.save_model(
+                model,
+                str(temp_path),
+                skops_trusted_types=SKOPS_TRUSTED_TYPES,
+            )
+
+            if artifact_path.exists():
+                shutil.rmtree(artifact_path)
+
+            shutil.move(str(temp_path), str(artifact_path))
+
         client.set_registered_model_alias(
             settings.model_name,
             settings.model_alias,
             latest.version,
-        )
-
-        Path(settings.model_artifact_path).parent.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
-
-        mlflow.sklearn.save_model(
-            model,
-            settings.model_artifact_path,
-            skops_trusted_types=SKOPS_TRUSTED_TYPES,
         )
 
         return {

@@ -1,7 +1,9 @@
+from sklearn.model_selection import train_test_split
+
 from modelopsforge.data import make_dataset
 from modelopsforge.evaluation import evaluate
 from modelopsforge.model import build_model
-from sklearn.model_selection import train_test_split
+
 
 def test_model_produces_metrics():
     d = make_dataset(samples=500)

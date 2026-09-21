@@ -3,12 +3,11 @@
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
-from pydantic import BaseModel, Field
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from pydantic import BaseModel, Field
 
-from .monitoring import REQUESTS, LATENCY, PREDICTIONS
+from .monitoring import LATENCY, PREDICTIONS, REQUESTS
 from .registry import load_champion
-
 
 app = FastAPI(title="ModelOpsForge API", version="0.1.0")
 
